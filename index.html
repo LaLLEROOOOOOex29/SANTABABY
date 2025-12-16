@@ -128,6 +128,7 @@
   const openBtn = document.getElementById("openBtn");
   const stage = document.getElementById("stage");
   const box = document.querySelector(".box");
+  const hint = document.getElementById("hint");
 
   const bgVideo = document.getElementById("bgVideo");
   const fgVideo = document.getElementById("fgVideo");
@@ -135,20 +136,54 @@
   const ohyeah = document.getElementById("ohyeah");
   const music = document.getElementById("music");
 
-  openBtn.addEventListener("click", () => {
-    box.style.display = "none";
-    stage.style.display = "block";
+  function fadeInAudio(audio, duration = 3000){
+    audio.volume = 0;
+    audio.play().catch(()=>{});
 
-    // suono apertura
-    ohyeah.currentTime = 0;
-    ohyeah.play().catch(()=>{});
+    const step = 0.05;
+    const interval = duration / (1 / step);
 
-    // musica sottofondo (parte subito dopo)
-    music.volume = 0.5;
-    music.play().catch(()=>{});
+    const fade = setInterval(() => {
+      if (audio.volume < 1) {
+        audio.volume = Math.min(audio.volume + step, 1);
+      } else {
+        clearInterval(fade);
+      }
+    }, interval);
+  }
+
+  function startAll(){
+    bgVideo.currentTime = 0;
+    fgVideo.currentTime = 0;
 
     bgVideo.play().catch(()=>{});
     fgVideo.play().catch(()=>{});
+
+    ohyeah.currentTime = 0;
+    ohyeah.play().catch(()=>{});
+
+    setTimeout(() => {
+      fadeInAudio(music, 4000); // fade-in di 4 secondi
+    }, 600);
+  }
+
+  openBtn.addEventListener("click", () => {
+    box.style.display = "none";
+    stage.style.display = "block";
+    hint.style.display = "block";
+    startAll();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){
+      stage.style.display = "none";
+      box.style.display = "flex";
+      hint.style.display = "none";
+
+      bgVideo.pause();
+      fgVideo.pause();
+      music.pause();
+    }
   });
 </script>
 
