@@ -13,7 +13,7 @@
       overflow:hidden;
     }
 
-    /* SCHERMATA INIZIALE */
+    /* HOME */
     .box{
       position:fixed;
       inset:0;
@@ -91,7 +91,6 @@
       font-weight:800;
       text-shadow:0 4px 20px rgba(0,0,0,.8);
       padding:0 16px;
-      box-sizing:border-box;
     }
 
     .subtitle{
@@ -103,7 +102,6 @@
       opacity:.95;
       text-shadow:0 3px 14px rgba(0,0,0,.8);
       padding:0 16px;
-      box-sizing:border-box;
     }
 
     /* AUDIO BUTTON */
@@ -127,11 +125,8 @@
     @media (max-width: 768px){
       .box h1{ font-size:26px; }
       button{ font-size:18px; padding:12px 24px; }
-
       .title{ top:14%; font-size:34px; }
       .subtitle{ bottom:14%; font-size:18px; }
-
-      /* leggero zoom-out per non tagliare il muso */
       #fgVideo{ transform:scale(0.92); }
     }
   </style>
@@ -147,8 +142,8 @@
 
   <!-- STAGE -->
   <div id="stage">
-    <video id="bgVideo" src="gif.gif.mp4?v=2" autoplay loop muted playsinline></video>
-    <video id="fgVideo" src="gif.gif.mp4?v=2" autoplay loop muted playsinline></video>
+    <video id="bgVideo" src="gif.gif.mp4?v=9" autoplay loop muted playsinline></video>
+    <video id="fgVideo" src="gif.gif.mp4?v=9" autoplay loop muted playsinline></video>
 
     <div class="overlay">
       <div class="title">🎄 BUON NATALE 🎄</div>
@@ -156,8 +151,11 @@
     </div>
   </div>
 
-  <!-- AUDIO -->
-  <audio id="music" src="song.mp3?v=2" preload="auto" loop></audio>
+  <!-- AUDIO (ANTI-CACHE + SAFE) -->
+  <audio id="music" preload="auto" loop>
+    <source src="song.mp3?v=9" type="audio/mpeg">
+  </audio>
+
   <button id="soundBtn">🔊</button>
 
   <script>
@@ -171,45 +169,29 @@
 
     let soundOn = true;
 
-    function startAll(){
-      bgVideo.currentTime = 0;
-      fgVideo.currentTime = 0;
-      music.currentTime = 0;
-
-      bgVideo.play().catch(()=>{});
-      fgVideo.play().catch(()=>{});
-
-      music.volume = 0.8;
-      music.muted = false;
-      music.play().catch(()=>{});
-    }
-
-    function stopAll(){
-      bgVideo.pause();
-      fgVideo.pause();
-      music.pause();
-    }
-
-    function updateSound(){
-      soundBtn.textContent = soundOn ? "🔊" : "🔇";
-      music.muted = !soundOn;
-      if(soundOn){
-        music.play().catch(()=>{});
-      }
-    }
-
     openBtn.addEventListener("click", () => {
       box.style.display = "none";
       stage.style.display = "block";
       soundBtn.style.display = "block";
-      soundOn = true;
-      updateSound();
-      startAll();
+
+      bgVideo.currentTime = 0;
+      fgVideo.currentTime = 0;
+      bgVideo.play().catch(()=>{});
+      fgVideo.play().catch(()=>{});
+
+      music.currentTime = 0;
+      music.muted = false;
+      music.volume = 1.0;
+      music.play().catch(err => console.log("Audio blocked:", err));
     });
 
     soundBtn.addEventListener("click", () => {
       soundOn = !soundOn;
-      updateSound();
+      music.muted = !soundOn;
+      soundBtn.textContent = soundOn ? "🔊" : "🔇";
+      if(soundOn){
+        music.play().catch(()=>{});
+      }
     });
   </script>
 
