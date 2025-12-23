@@ -50,6 +50,13 @@
       background:black;
       z-index:1;
       overflow:hidden;
+
+      /* fade */
+      opacity:0;
+      transition:opacity 1.6s ease; /* <- transizione più lenta */
+    }
+    #stage.show{
+      opacity:1;
     }
 
     /* VIDEO SFONDO */
@@ -125,12 +132,17 @@
       .title{ top:14%; font-size:34px; }
       .subtitle{ bottom:14%; font-size:18px; }
 
+      /* leggero zoom-out così il cavallo taglia meno */
       #fgVideo{ transform:scale(0.92); }
     }
   </style>
 </head>
 
 <body>
+
+  <!-- AUDIO (root repo) -->
+  <audio id="clickSfx" src="oh-yeah.mp3" preload="auto"></audio>
+  <audio id="bgMusic" src="song.mp3" preload="auto" loop></audio>
 
   <!-- SCHERMATA INIZIALE -->
   <div class="box">
@@ -147,7 +159,7 @@
       <div class="title">🎄 BUON NATALE 🎄</div>
       <div class="subtitle">
         Pensavi a un massaggio per la sciatica?<br>
-        Guarda la tazza. Anche dentro ☕️👀
+        (Guarda anche dentro ☕️👀)
       </div>
     </div>
   </div>
@@ -155,34 +167,90 @@
   <div id="hint">Tip: premi ESC per chiudere</div>
 
   <script>
-    const openBtn = document.getElementById("openBtn");
-    const stage = document.getElementById("stage");
-    const box = document.querySelector(".box");
-    const hint = document.getElementById("hint");
-    const bgVideo = document.getElementById("bgVideo");
-    const fgVideo = document.getElementById("fgVideo");
+    const openBtn  = document.getElementById("openBtn");
+    const stage    = document.getElementById("stage");
+    const box      = document.querySelector(".box");
+    const hint     = document.getElementById("hint");
 
-    openBtn.addEventListener("click", () => {
-      box.style.display = "none";
-      stage.style.display = "block";
-      hint.style.display = "block";
+    const bgVideo  = document.getElementById("bgVideo");
+    const fgVideo  = document.getElementById("fgVideo");
+
+    const clickSfx = document.getElementById("clickSfx");
+    const bgMusic  = document.getElementById("bgMusic");
+
+    let started = false;
+    let fadeTimer = null;
+
+    function startVideos(){
       bgVideo.currentTime = 0;
       fgVideo.currentTime = 0;
       bgVideo.play().catch(()=>{});
       fgVideo.play().catch(()=>{});
+    }
+
+    function fadeInMusic(target=0.35, step=0.02, everyMs=120){
+      clearInterval(fadeTimer);
+      bgMusic.volume = 0; // parte piano
+      fadeTimer = setInterval(() => {
+        bgMusic.volume = Math.min(target, bgMusic.volume + step);
+        if (bgMusic.volume >= target) clearInterval(fadeTimer);
+      }, everyMs);
+    }
+
+    function showStageAndMusic(){
+      box.style.display = "none";
+      stage.style.display = "block";
+      hint.style.display = "block";
+
+      // trigger fade
+      requestAnimationFrame(() => stage.classList.add("show"));
+
+      startVideos();
+
+      // musica sottofondo
+      bgMusic.currentTime = 0;
+      bgMusic.play().then(() => {
+        fadeInMusic(0.35);
+      }).catch(()=>{});
+    }
+
+    openBtn.addEventListener("click", async () => {
+      if (started) return;
+      started = true;
+      openBtn.disabled = true;
+
+      // suono del tasto (DEVE partire qui, per policy mobile)
+      clickSfx.currentTime = 0;
+      try { await clickSfx.play(); } catch(e) {}
+
+      // quando finisce "oh yeah" -> entra cavallo e parte musica
+      clickSfx.onended = () => {
+        showStageAndMusic();
+      };
+
+      // fallback: se per qualche motivo non scatta onended
+      setTimeout(() => {
+        if (stage.style.display !== "block") showStageAndMusic();
+      }, 2500);
     });
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape"){
+        stage.classList.remove("show");
         stage.style.display = "none";
         box.style.display = "flex";
         hint.style.display = "none";
+
         bgVideo.pause();
         fgVideo.pause();
+        clickSfx.pause();
+        bgMusic.pause();
+
+        started = false;
+        openBtn.disabled = false;
       }
     });
   </script>
 
 </body>
 </html>
-
